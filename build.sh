@@ -61,7 +61,6 @@ function make_dtb {
 
 function make_boot {
 		cp -vr $ZIMAGE_DIR/Image.lz4-dtb ~/android/AnyKernel2/zImage
-    cp -vr $ZIMAGE_DIR/dtbo.img ~/android/AnyKernel2/dtbo.img
 }
 
 
@@ -125,6 +124,7 @@ case "$dchoice" in
 		make_dtb
 		make_modules
 		make_boot
+        make_zip
 		break
 		;;
 	n|N )
