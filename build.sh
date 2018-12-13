@@ -21,7 +21,7 @@ export LD_LIBRARY_PATH=${HOME}/android/clangmaster/clang-4679922/lib64:$LD_LIBRA
 DEFCONFIG="b1c1_defconfig"
 
 # Kernel Details
-VER=".R14B"
+VER=".R15B"
 
 # Paths
 KERNEL_DIR=`pwd`
@@ -60,7 +60,8 @@ function make_dtb {
 }
 
 function make_boot {
-		cp -vr $ZIMAGE_DIR/Image.lz4-dtb ~/android/AnyKernel2/zImage
+		cp -vr $ZIMAGE_DIR/Image.lz4-dtb ~/android/AnyKernel2/Image.lz4-dtb
+        cp -vr $ZIMAGE_DIR/dtbo.img ~/android/AnyKernel2/dtbo.img
 }
 
 
