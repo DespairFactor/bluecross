@@ -21,7 +21,7 @@ export LD_LIBRARY_PATH=${HOME}/android/clang/clang-4679922/lib64:$LD_LIBRARY_PAT
 DEFCONFIG="b1c1_defconfig"
 
 # Kernel Details
-VER=".R17B"
+VER=".R18B"
 
 # Paths
 KERNEL_DIR=`pwd`
