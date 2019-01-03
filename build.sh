@@ -45,6 +45,8 @@ function clean_all {
 
 function make_kernel {
 		echo
+		rm -rf ~/android/AnyKernel2/dtbo.img
+		rm -rf ~/android/AnyKernel2/Image.lz4-dtb
 		make CC=clang O=out $DEFCONFIG
 		make CC=clang O=out -j10
 
