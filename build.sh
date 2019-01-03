@@ -15,7 +15,7 @@ DTBIMAGE="dtb"
 export CLANG_PATH=~/android/clang/clang-4679922/bin/
 export PATH=${CLANG_PATH}:${PATH}
 export CLANG_TRIPLE=aarch64-linux-gnu-
-export CROSS_COMPILE=~/android/aarch64-linux-android-4.9/bin/aarch64-linux-android-
+export CROSS_COMPILE=~/android/aarch64/bin/aarch64-linux-gnu-
 export CROSS_COMPILE_ARM32=${HOME}/android/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
 export LD_LIBRARY_PATH=${HOME}/android/clang/clang-4679922/lib64:$LD_LIBRARY_PATH
 DEFCONFIG="b1c1_defconfig"
@@ -47,8 +47,8 @@ function make_kernel {
 		echo
 		rm -rf ~/android/AnyKernel2/dtbo.img
 		rm -rf ~/android/AnyKernel2/Image.lz4-dtb
-		make CC=clang O=out $DEFCONFIG
-		make CC=clang O=out -j10
+		make O=out $DEFCONFIG
+		make O=out -j10
 
 }
 
