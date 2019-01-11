@@ -47,6 +47,7 @@ function make_kernel {
 		echo
 		rm -rf ~/android/Tools/AnyKernel2/dtbo.img
 		rm -rf ~/android/Tools/AnyKernel2/Image.lz4-dtb
+		rm -rf ~/android/Tools/AnyKernel2/Image.gz-dtb
 		make O=out $DEFCONFIG
 		make O=out -j10
 
@@ -63,7 +64,7 @@ function make_dtb {
 
 function make_boot {
 		cp -vr $ZIMAGE_DIR/Image.lz4-dtb ~/android/Tools/AnyKernel2/Image.lz4-dtb
-        cp -vr $ZIMAGE_DIR/dtbo.img ~/android/Tools/AnyKernel2/dtbo.img
+        	cp -vr $ZIMAGE_DIR/dtbo.img ~/android/Tools/AnyKernel2/dtbo.img
 }
 
 
