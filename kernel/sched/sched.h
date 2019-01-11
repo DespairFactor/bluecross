@@ -712,6 +712,7 @@ struct rq {
 #endif
 	#define CPU_LOAD_IDX_MAX 5
 	unsigned long cpu_load[CPU_LOAD_IDX_MAX];
+	unsigned int nr_pinned_tasks;
 	unsigned int misfit_task;
 #ifdef CONFIG_NO_HZ_COMMON
 #ifdef CONFIG_SMP
@@ -1232,7 +1233,7 @@ static __always_inline bool static_branch_##name(struct static_key *key) \
 extern struct static_key sched_feat_keys[__SCHED_FEAT_NR];
 #define sched_feat(x) (static_branch_##x(&sched_feat_keys[__SCHED_FEAT_##x]))
 #else /* !(SCHED_DEBUG && HAVE_JUMP_LABEL) */
-#define sched_feat(x) (sysctl_sched_features & (1UL << __SCHED_FEAT_##x))
+#define sched_feat(x) !!(sysctl_sched_features & (1UL << __SCHED_FEAT_##x))
 #endif /* SCHED_DEBUG && HAVE_JUMP_LABEL */
 
 extern struct static_key_false sched_numa_balancing;
@@ -1367,6 +1368,7 @@ extern const u32 sched_prio_to_wmult[40];
 #define DEQUEUE_SLEEP		0x01
 #define DEQUEUE_SAVE		0x02 /* matches ENQUEUE_RESTORE */
 #define DEQUEUE_MOVE		0x04 /* matches ENQUEUE_MOVE */
+#define DEQUEUE_IDLE		0x80 /* The last dequeue before IDLE */
 
 #define ENQUEUE_WAKEUP		0x01
 #define ENQUEUE_RESTORE		0x02
@@ -2242,8 +2244,13 @@ static inline u64 irq_time_read(int cpu)
 #endif /* CONFIG_IRQ_TIME_ACCOUNTING */
 
 #ifdef CONFIG_SCHED_WALT
+u64 sched_ktime_clock(void);
 void note_task_waking(struct task_struct *p, u64 wallclock);
 #else /* CONFIG_SCHED_WALT */
+static inline u64 sched_ktime_clock(void)
+{
+	return 0;
+}
 static inline void note_task_waking(struct task_struct *p, u64 wallclock) { }
 #endif /* CONFIG_SCHED_WALT */
 
@@ -2279,7 +2286,7 @@ static inline void cpufreq_update_util(struct rq *rq, unsigned int flags)
 	data = rcu_dereference_sched(*per_cpu_ptr(&cpufreq_update_util_data,
 					cpu_of(rq)));
 	if (data)
-		data->func(data, ktime_get_ns(), flags);
+		data->func(data, sched_ktime_clock(), flags);
 }
 
 static inline void cpufreq_update_this_cpu(struct rq *rq, unsigned int flags)
@@ -2420,7 +2427,11 @@ static inline void __update_min_max_capacity(void)
 	int i;
 	int max_cap = 0, min_cap = INT_MAX;
 
-	for_each_online_cpu(i) {
+	for_each_possible_cpu(i) {
+
+		if (!cpu_active(i))
+			continue;
+
 		max_cap = max(max_cap, cpu_capacity(i));
 		min_cap = min(min_cap, cpu_capacity(i));
 	}
@@ -2685,6 +2696,7 @@ static inline unsigned int power_cost(int cpu, bool max)
 }
 
 extern void walt_sched_energy_populated_callback(void);
+extern void walt_update_min_max_capacity(void);
 
 #else	/* CONFIG_SCHED_WALT */
 
@@ -2818,6 +2830,7 @@ static inline unsigned int power_cost(int cpu, bool max)
 }
 
 static inline void walt_sched_energy_populated_callback(void) { }
+static inline void walt_update_min_max_capacity(void) { }
 
 #endif	/* CONFIG_SCHED_WALT */
 

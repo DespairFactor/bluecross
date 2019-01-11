@@ -21,7 +21,7 @@ export LD_LIBRARY_PATH=~/android/Toolchains/google/clang-r346389b/lib64:$LD_LIBR
 DEFCONFIG="b1c1_defconfig"
 
 # Kernel Details
-VER=".R19U"
+VER=".R21U"
 
 # Paths
 KERNEL_DIR=`pwd`

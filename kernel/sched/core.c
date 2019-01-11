@@ -2074,14 +2074,15 @@ static void ttwu_queue(struct task_struct *p, int cpu, int wake_flags)
  * @state: the mask of task states that can be woken
  * @wake_flags: wake modifier flags (WF_*)
  *
- * Put it on the run-queue if it's not already there. The "current"
- * thread is always on the run-queue (except when the actual
- * re-schedule is in progress), and as such you're allowed to do
- * the simpler "current->state = TASK_RUNNING" to mark yourself
- * runnable without the overhead of this.
+ * If (@state & @p->state) @p->state = TASK_RUNNING.
  *
- * Return: %true if @p was woken up, %false if it was already running.
- * or @state didn't match @p's state.
+ * If the task was not queued/runnable, also place it back on a runqueue.
+ *
+ * Atomic against schedule() which would dequeue a task, also see
+ * set_current_state().
+ *
+ * Return: %true if @p->state changes (an actual wakeup was done),
+ *	   %false otherwise.
  */
 static int
 try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
@@ -2173,7 +2174,7 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 	rq = cpu_rq(task_cpu(p));
 	raw_spin_lock(&rq->lock);
 	old_load = task_load(p);
-	wallclock = ktime_get_ns();
+	wallclock = sched_ktime_clock();
 	update_task_ravg(rq->curr, rq, TASK_UPDATE, wallclock, 0);
 	update_task_ravg(p, rq, TASK_WAKE, wallclock, 0);
 	raw_spin_unlock(&rq->lock);
@@ -2258,7 +2259,7 @@ static void try_to_wake_up_local(struct task_struct *p, struct pin_cookie cookie
 	trace_sched_waking(p);
 
 	if (!task_on_rq_queued(p)) {
-		u64 wallclock = ktime_get_ns();
+		u64 wallclock = sched_ktime_clock();
 
 		update_task_ravg(rq->curr, rq, TASK_UPDATE, wallclock, 0);
 		update_task_ravg(p, rq, TASK_WAKE, wallclock, 0);
@@ -2504,7 +2505,7 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 	unsigned long flags;
 	int cpu;
 
-	init_new_task_load(p, false);
+	init_new_task_load(p);
 	cpu = get_cpu();
 
 	__sched_fork(clone_flags, p);
@@ -3262,7 +3263,7 @@ void scheduler_tick(void)
 	old_load = task_load(curr);
 	set_window_start(rq);
 
-	wallclock = ktime_get_ns();
+	wallclock = sched_ktime_clock();
 	update_task_ravg(rq->curr, rq, TASK_UPDATE, wallclock, 0);
 
 	update_rq_clock(rq);
@@ -3633,7 +3634,7 @@ static void __sched notrace __schedule(bool preempt)
 	clear_preempt_need_resched();
 	rq->clock_skip_update = 0;
 
-	wallclock = ktime_get_ns();
+	wallclock = sched_ktime_clock();
 	if (likely(prev != next)) {
 		prev->last_cpu_deselected_ts = wallclock;
 		if (!prev->on_rq)
@@ -5547,20 +5548,16 @@ void init_idle_bootup_task(struct task_struct *idle)
  * init_idle - set up an idle thread for a given CPU
  * @idle: task in question
  * @cpu: cpu the idle task belongs to
- * @cpu_up: differentiate between initial boot vs hotplug
  *
  * NOTE: this function does not set the idle thread's NEED_RESCHED
  * flag, to make booting more robust.
  */
-void init_idle(struct task_struct *idle, int cpu, bool cpu_up)
+void init_idle(struct task_struct *idle, int cpu)
 {
 	struct rq *rq = cpu_rq(cpu);
 	unsigned long flags;
 
 	__sched_fork(0, idle);
-
-	if (!cpu_up)
-		init_new_task_load(idle, true);
 
 	raw_spin_lock_irqsave(&idle->pi_lock, flags);
 	raw_spin_lock(&rq->lock);
@@ -8046,6 +8043,7 @@ int sched_cpu_activate(unsigned int cpu)
 	raw_spin_unlock_irqrestore(&rq->lock, flags);
 
 	update_max_interval();
+	walt_update_min_max_capacity();
 
 	return 0;
 }
@@ -8079,6 +8077,7 @@ int sched_cpu_deactivate(unsigned int cpu)
 		return ret;
 	}
 	sched_domains_numa_masks_clear(cpu);
+	walt_update_min_max_capacity();
 	return 0;
 }
 
@@ -8375,7 +8374,8 @@ void __init sched_init(void)
 	 * but because we are the idle thread, we just pick up running again
 	 * when this runqueue becomes "idle".
 	 */
-	init_idle(current, smp_processor_id(), false);
+	init_idle(current, smp_processor_id());
+	init_new_task_load(current);
 
 	calc_load_update = jiffies + LOAD_FREQ;
 
@@ -9618,7 +9618,7 @@ void sched_exit(struct task_struct *p)
 	rq = task_rq_lock(p, &rf);
 
 	/* rq->curr == p */
-	wallclock = ktime_get_ns();
+	wallclock = sched_ktime_clock();
 	update_task_ravg(rq->curr, rq, TASK_UPDATE, wallclock, 0);
 	dequeue_task(rq, p, 0);
 	/*
