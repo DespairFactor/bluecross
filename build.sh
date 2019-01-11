@@ -12,29 +12,29 @@ clear
 THREAD="-j$(grep -c ^processor /proc/cpuinfo)"
 KERNEL="Image"
 DTBIMAGE="dtb"
-export CLANG_PATH=~/android/Toolchains/google/clang-r346389b/bin/
+export CLANG_PATH=~/android/clang/clang-4679922/bin/
 export PATH=${CLANG_PATH}:${PATH}
 export CLANG_TRIPLE=aarch64-linux-gnu-
-export CROSS_COMPILE=${HOME}/android/Toolchains/gcc/bin/aarch64-linux-gnu-
-export CROSS_COMPILE_ARM32=${HOME}/android/Toolchains/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
-export LD_LIBRARY_PATH=~/android/Toolchains/google/clang-r346389b/lib64:$LD_LIBRARY_PATH
+export CROSS_COMPILE=~/android/aarch64/bin/aarch64-linux-gnu-
+export CROSS_COMPILE_ARM32=${HOME}/android/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
+export LD_LIBRARY_PATH=${HOME}/android/clang/clang-4679922/lib64:$LD_LIBRARY_PATH
 DEFCONFIG="b1c1_defconfig"
 
 # Kernel Details
-VER=".R21U"
+VER=".R21"
 
 # Paths
 KERNEL_DIR=`pwd`
-REPACK_DIR="${HOME}/android/Tools/AK-OnePone-AnyKernel2"
-PATCH_DIR="${HOME}/android/Tools/AK-OnePone-AnyKernel2/patch"
-MODULES_DIR="${HOME}/android/Tools/AK-OnePone-AnyKernel2/modules"
-ZIP_MOVE="${HOME}/android/Releases"
-ZIMAGE_DIR="${HOME}/android/Kernels/bluecross/out/arch/arm64/boot/"
+REPACK_DIR="${HOME}/android/AK-OnePone-AnyKernel2"
+PATCH_DIR="${HOME}/android/AK-OnePone-AnyKernel2/patch"
+MODULES_DIR="${HOME}/android/AK-OnePone-AnyKernel2/modules"
+ZIP_MOVE="${HOME}/android/AK-releases"
+ZIMAGE_DIR="${HOME}/android/bluecross/out/arch/arm64/boot/"
 
 # Functions
 function clean_all {
 		rm -rf $MODULES_DIR/*
-		cd ~/android/Kernels/bluecross/out/kernel
+		cd ~/android/bluecross/out/kernel
 		rm -rf $DTBIMAGE
 		git reset --hard > /dev/null 2>&1
 		git clean -f -d > /dev/null 2>&1
@@ -45,9 +45,8 @@ function clean_all {
 
 function make_kernel {
 		echo
-		rm -rf ~/android/Tools/AnyKernel2/dtbo.img
-		rm -rf ~/android/Tools/AnyKernel2/Image.lz4-dtb
-		rm -rf ~/android/Tools/AnyKernel2/Image.gz-dtb
+		rm -rf ~/android/AnyKernel2/dtbo.img
+		rm -rf ~/android/AnyKernel2/Image.lz4-dtb
 		make O=out $DEFCONFIG
 		make O=out -j10
 
@@ -63,13 +62,13 @@ function make_dtb {
 }
 
 function make_boot {
-		cp -vr $ZIMAGE_DIR/Image.lz4-dtb ~/android/Tools/AnyKernel2/Image.lz4-dtb
-        	cp -vr $ZIMAGE_DIR/dtbo.img ~/android/Tools/AnyKernel2/dtbo.img
+		cp -vr $ZIMAGE_DIR/Image.lz4-dtb ~/android/AnyKernel2/Image.lz4-dtb
+        cp -vr $ZIMAGE_DIR/dtbo.img ~/android/AnyKernel2/dtbo.img
 }
 
 
 function make_zip {
-		cd ~/android/Tools/AnyKernel2/
+		cd ~/android/AnyKernel2/
 		zip -r9 `echo $AK_VER`.zip *
 		mv  `echo $AK_VER`.zip $ZIP_MOVE
 		cd $KERNEL_DIR
@@ -93,8 +92,8 @@ export LOCALVERSION=~`echo $AK_VER`
 export LOCALVERSION=~`echo $AK_VER`
 export ARCH=arm64
 export SUBARCH=arm64
-export KBUILD_BUILD_USER=Camvar97
-export KBUILD_BUILD_HOST=CTG
+export KBUILD_BUILD_USER=DespairFactor
+export KBUILD_BUILD_HOST=DarkRoom
 
 echo
 
