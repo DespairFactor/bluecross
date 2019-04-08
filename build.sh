@@ -12,16 +12,16 @@ clear
 THREAD="-j$(grep -c ^processor /proc/cpuinfo)"
 KERNEL="Image"
 DTBIMAGE="dtb"
-export CLANG_PATH=~/android/clang/clang-r349610b/bin/
+export CLANG_PATH=~/android/clang-dev/bin
 export PATH=${CLANG_PATH}:${PATH}
 export CLANG_TRIPLE=aarch64-linux-gnu-
 export CROSS_COMPILE=~/android/aarch64-linux-android-4.9/bin/aarch64-linux-android-
 export CROSS_COMPILE_ARM32=${HOME}/android/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
-export LD_LIBRARY_PATH=${HOME}/android/clang/clang-r349610b/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${HOME}/android/clang-dev/lib64:$LD_LIBRARY_PATH
 DEFCONFIG="b1c1_defconfig"
 
 # Kernel Details
-VER=".R1"
+VER=".V1R"
 
 # Paths
 KERNEL_DIR=`pwd`
@@ -47,8 +47,8 @@ function make_kernel {
 		echo
 		rm -rf ~/android/AnyKernel2/dtbo.img
 		rm -rf ~/android/AnyKernel2/Image.lz4-dtb
-		make CC=clang O=out $DEFCONFIG
-		make CC=clang O=out -j10
+		make O=out CC=clang $DEFCONFIG
+		make O=out CC=clang -j10
 
 }
 
