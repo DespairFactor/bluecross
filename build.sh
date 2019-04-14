@@ -62,8 +62,8 @@ function make_dtb {
 }
 
 function make_boot {
-		cp -vr $ZIMAGE_DIR/Image.lz4-dtb ~/android/AnyKernel2/Image.lz4-dtb
-        cp -vr $ZIMAGE_DIR/dtbo.img ~/android/AnyKernel2/dtbo.img
+		./scripts/mkbootimg/mkbootimg.py --kernel out/arch/arm64/boot/Image.lz4-dtb --ramdisk scripts/prebuilt/ramdisk --dtb scripts/prebuilt/dtb --cmdline 'console=ttyMSM0,115200n8 androidboot.console=ttyMSM0 printk.devkmsg=on msm_rtb.filter=0x237 ehci-hcd.park=3 service_locator.enable=1 cgroup.memory=nokmem lpm_levels.sleep_disabled=1 usbcore.autosuspend=7 loop.max_part=7 androidboot.boot_devices=soc/1d84000.ufshc androidboot.super_partition=system buildvariant=userdebug' --header_version 2 -o ~/android/AK-releases/${AK_VER}.img
+
 }
 
 
@@ -127,7 +127,6 @@ case "$dchoice" in
 		make_dtb
 		make_modules
 		make_boot
-        make_zip
 		break
 		;;
 	n|N )
