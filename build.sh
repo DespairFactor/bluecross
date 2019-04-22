@@ -21,7 +21,7 @@ export LD_LIBRARY_PATH=${HOME}/android/tc-build/usr/lib:$LD_LIBRARY_PATH
 DEFCONFIG="b1c1_defconfig"
 
 # Kernel Details
-VER=".V3R"
+VER=".V4R"
 
 # Paths
 KERNEL_DIR=`pwd`
