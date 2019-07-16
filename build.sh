@@ -10,14 +10,12 @@ clear
 
 # Resources
 THREAD="-j$(grep -c ^processor /proc/cpuinfo)"
-KERNEL="Image"
-DTBIMAGE="dtb"
-export CLANG_PATH=~/android/clang/clang-r353983d/bin/
+export CLANG_PATH=~/android/clang/clang-r353983e/bin
 export PATH=${CLANG_PATH}:${PATH}
 export CLANG_TRIPLE=aarch64-linux-gnu-
 export CROSS_COMPILE=~/android/aarch64-linux-android-4.9/bin/aarch64-linux-android-
 export CROSS_COMPILE_ARM32=${HOME}/android/arm-linux-androideabi-4.9/bin/arm-linux-androideabi-
-export LD_LIBRARY_PATH=${HOME}/android/clang/clang-r353983d/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${HOME}/android/clang/clang-r353983e/lib64:$LD_LIBRARY_PATH
 DEFCONFIG="b1c1_defconfig"
 
 # Kernel Details
@@ -25,17 +23,13 @@ VER=".V11Q"
 
 # Paths
 KERNEL_DIR=`pwd`
-REPACK_DIR="${HOME}/android/AK-OnePone-AnyKernel2"
-PATCH_DIR="${HOME}/android/AK-OnePone-AnyKernel2/patch"
-MODULES_DIR="${HOME}/android/AK-OnePone-AnyKernel2/modules"
-ZIP_MOVE="${HOME}/android/AK-releases"
-ZIMAGE_DIR="${HOME}/android/bluecross/out/arch/arm64/boot/"
+REPACK_DIR="${HOME}/android/AnyKernel3"
+ZIP_MOVE="${HOME}/android/releases"
+ZIMAGE_DIR="${HOME}/android/bluecross/out/arch/arm64/boot"
 
 # Functions
 function clean_all {
-		rm -rf $MODULES_DIR/*
-		cd ~/android/bluecross/out/kernel
-		rm -rf $DTBIMAGE
+		rm -rf out
 		git reset --hard > /dev/null 2>&1
 		git clean -f -d > /dev/null 2>&1
 		cd $KERNEL_DIR
@@ -45,34 +39,26 @@ function clean_all {
 
 function make_kernel {
 		echo
-		rm -rf ~/android/AnyKernel2/dtbo.img
-		rm -rf ~/android/AnyKernel2/Image.lz4-dtb
-		make CC=clang O=out $DEFCONFIG
-		make CC=clang O=out -j10
+		rm -rf ~/android/AnyKernel3/dtbo.img
+		rm -rf ~/android/AnyKernel3/Image.lz4-dtb
+		make O=out CC=clang $DEFCONFIG
+		make O=out CC=clang -j10
 
 }
 
-function make_modules {
-		rm `echo $MODULES_DIR"/*"`
-		find $KERNEL_DIR -name '*.ko' -exec cp -v {} $MODULES_DIR \;
-}
-
-function make_dtb {
-		$REPACK_DIR/tools/dtbToolCM -2 -o $REPACK_DIR/$DTBIMAGE -s 2048 -p scripts/dtc/ arch/arm64/boot/
+function move_images {
+		cp -vr $ZIMAGE_DIR/Image.lz4-dtb $REPACK_DIR/Image.lz4-dtb
+		cp -vr $ZIMAGE_DIR/dtbo.img $REPACK_DIR/dtbo.img
 }
 
 function make_boot {
-		./scripts/mkbootimg/mkbootimg.py --kernel out/arch/arm64/boot/Image.lz4-dtb --ramdisk scripts/prebuilt/ramdisk --dtb scripts/prebuilt/dtb --cmdline 'console=ttyMSM0,115200n8 androidboot.console=ttyMSM0 printk.devkmsg=on msm_rtb.filter=0x237 ehci-hcd.park=3 service_locator.enable=1 cgroup.memory=nokmem lpm_levels.sleep_disabled=1 usbcore.autosuspend=7 loop.max_part=7 androidboot.boot_devices=soc/1d84000.ufshc androidboot.super_partition=system buildvariant=userdebug' --header_version 2 -o ~/android/AK-releases/${AK_VER}.img
-		cp -vr $ZIMAGE_DIR/Image.lz4-dtb ~/android/AnyKernel2/Image.lz4-dtb
-        cp -vr $ZIMAGE_DIR/dtbo.img ~/android/AnyKernel2/dtbo.img
-
+		./scripts/mkbootimg/mkbootimg.py --kernel $ZIMAGE_DIR/Image.lz4-dtb --ramdisk scripts/prebuilt/ramdisk --dtb scripts/prebuilt/dtb --cmdline 'console=ttyMSM0,115200n8 androidboot.console=ttyMSM0 printk.devkmsg=on msm_rtb.filter=0x237 ehci-hcd.park=3 service_locator.enable=1 cgroup.memory=nokmem lpm_levels.sleep_disabled=1 usbcore.autosuspend=7 loop.max_part=7 androidboot.boot_devices=soc/1d84000.ufshc androidboot.super_partition=system buildvariant=userdebug' --header_version 2 -o $ZIP_MOVE/${KERNEL_VER}.img
 }
 
-
 function make_zip {
-		cd ~/android/AnyKernel2/
-		zip -r9 `echo $AK_VER`.zip *
-		mv  `echo $AK_VER`.zip $ZIP_MOVE
+		cd $REPACK_DIR
+		zip -r9 `echo $KERNEL_VER`.zip *
+		mv  `echo $KERNEL_VER`.zip $ZIP_MOVE
 		cd $KERNEL_DIR
 }
 
@@ -88,10 +74,10 @@ echo -e "${restore}"
 
 
 # Vars
-BASE_AK_VER="Despair"
-AK_VER="$BASE_AK_VER$VER"
-export LOCALVERSION=~`echo $AK_VER`
-export LOCALVERSION=~`echo $AK_VER`
+BASE_VER="Despair"
+KERNEL_VER="$BASE_VER$VER"
+export LOCALVERSION=~`echo $KERNEL_VER`
+export LOCALVERSION=~`echo $KERNEL_VER`
 export ARCH=arm64
 export SUBARCH=arm64
 export KBUILD_BUILD_USER=DespairFactor
@@ -126,8 +112,7 @@ do
 case "$dchoice" in
 	y|Y )
 		make_kernel
-		make_dtb
-		make_modules
+		move_images
 		make_boot
 		make_zip
 		break
